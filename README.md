@@ -1,2 +1,2 @@
 # jlctl
-Cooming soon, maybe. Or maybe not,
+Cooming soon, maybe. Or maybe not.
