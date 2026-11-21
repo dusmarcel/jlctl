@@ -1,12 +1,34 @@
-use anyhow::Result;
+use anyhow::{Result, bail};
+use clap::{command, arg};
+use reqwest::Client;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let body = reqwest::get("http://localhost:8080")
-        .await?
-        .text()
+    let matches = command!()
+        .arg(
+            arg!(-u --user <USER> "Username for authentication")
+        )
+        .arg(
+            arg!(-p --password <PASSWORD> "Password for authentication")
+        )
+        .get_matches();
+
+    let Some(user) = matches.get_one::<String>("user") else {
+        bail!("User is required");
+    };
+    let Some(password) = matches.get_one::<String>("password") else {
+        bail!("Password is required");
+    };
+
+    let client = Client::new();
+    let response = client.get("http://localhost:8080/j-lawyer-io/rest/v1/cases/list")
+        .basic_auth(user, Some(password))
+        .send()
         .await?;
-    println!("{body:?}");
+    println!("{response:?}");
+
+    let text = response.text().await?;
+    println!("{text:?}");
 
     Ok(())
 }
