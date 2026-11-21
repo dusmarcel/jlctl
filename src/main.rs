@@ -11,6 +11,15 @@ async fn main() -> Result<()> {
         .arg(
             arg!(-p --password <PASSWORD> "Password for authentication")
         )
+        .arg(
+            arg!(-H --host <HOST> "Host of the j-lawyer-server")
+        )
+        .arg(
+            arg!(-P --port <PORT> "Port of the j-lawyer-server")
+        )
+        .arg(
+            arg!(-s --ssl "Use SSL for the connection (https instead of http)")
+        )
         .get_matches();
 
     let Some(user) = matches.get_one::<String>("user") else {
@@ -19,9 +28,21 @@ async fn main() -> Result<()> {
     let Some(password) = matches.get_one::<String>("password") else {
         bail!("Password is required");
     };
+    let Some(host) = matches.get_one::<String>("host") else {
+        bail!("Host is required");
+    };
+    let Some(port) = matches.get_one::<String>("port") else {
+        bail!("Port is required");
+    };
+    let ssl = matches.get_flag("ssl");
 
     let client = Client::new();
-    let response = client.get("http://localhost:8080/j-lawyer-io/rest/v1/cases/list")
+    let url = if ssl {
+        format!("https://{host}:{port}")
+    } else {
+        format!("http://{host}:{port}")
+    };
+    let response = client.get(format!("{url}/j-lawyer-io/rest/v1/cases/list"))
         .basic_auth(user, Some(password))
         .send()
         .await?;
