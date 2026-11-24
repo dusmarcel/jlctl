@@ -6,5 +6,5 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.104"
 clap = { version = "4.6.9", features = ["cargo"] }
-reqwest = "0.13.5"
+jl = { git = "https://github.com/dusmarcel/jl.git", version = "0.1.0" }
 tokio = { version = "1.54.1", features = ["full"] }

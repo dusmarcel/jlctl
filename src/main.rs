@@ -1,6 +1,7 @@
 use anyhow::{Result, bail};
 use clap::{command, arg};
-use reqwest::Client;
+
+use jl::JLC;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -36,16 +37,9 @@ async fn main() -> Result<()> {
     };
     let ssl = matches.get_flag("ssl");
 
-    let client = Client::new();
-    let url = if ssl {
-        format!("https://{host}:{port}")
-    } else {
-        format!("http://{host}:{port}")
-    };
-    let response = client.get(format!("{url}/j-lawyer-io/rest/v1/cases/list"))
-        .basic_auth(user, Some(password))
-        .send()
-        .await?;
+    let jlc = JLC::new(user.to_string(), password.to_string(), host.to_string(), port.to_string(), ssl);
+    let response = jlc.execute().await?;
+
     println!("{response:?}");
 
     let text = response.text().await?;
