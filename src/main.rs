@@ -1,5 +1,9 @@
 use anyhow::{Result, bail};
-use clap::{command, arg};
+use clap::{arg, command, value_parser};
+use directories::ProjectDirs;
+
+mod profile;
+use profile::Profile;
 
 use jl::JLC;
 
@@ -17,6 +21,7 @@ async fn main() -> Result<()> {
         )
         .arg(
             arg!(-P --port <PORT> "Port of the j-lawyer-server")
+                .value_parser(value_parser!(u32))
         )
         .arg(
             arg!(-s --ssl "Use SSL for the connection (https instead of http)")
@@ -32,18 +37,29 @@ async fn main() -> Result<()> {
     let Some(host) = matches.get_one::<String>("host") else {
         bail!("Host is required");
     };
-    let Some(port) = matches.get_one::<String>("port") else {
+    let Some(port) = matches.get_one::<u32>("port") else {
         bail!("Port is required");
     };
     let ssl = matches.get_flag("ssl");
 
-    let jlc = JLC::new(user.to_string(), password.to_string(), host.to_string(), port.to_string(), ssl);
+    let proj_dirs = ProjectDirs::from("de", "keienborg", "jlctl");
+    let conf_dir = if let Some(proj_dirs) = proj_dirs {
+       Some(proj_dirs.config_dir().to_owned())
+    } else {
+       None
+    };
+
+    let profile = Profile::new(user.to_string(), password.to_string(), host.to_string(), *port, ssl);
+    let jlc = JLC::new(profile.user, profile.password, profile.host, profile.port, profile.ssl);
     let response = jlc.execute().await?;
 
     println!("{response:?}");
 
     let text = response.text().await?;
     println!("{text:?}");
+
+    println!();
+    println!("Configuration directory: {:?}", conf_dir);
 
     Ok(())
 }
